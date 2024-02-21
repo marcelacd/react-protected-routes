@@ -1,23 +1,68 @@
-import React from "react";
+import React, { useState } from "react";
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 
 import StateLogin from "./useContext/loginContext/StateLogin";
 import { Admin, Analytics, Dashboard, Home, Landing } from "./pages";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 
 function App() {
-  Navigation();
+  const [user, setUser] = useState(null);
+
+  const login = () => {
+    //Request done
+    setUser({
+      id: 1,
+      name: "Marcela",
+      permissions: ["analize"],
+      role: ["admin"],
+    });
+  };
+
+  const logout = () => setUser(null);
 
   return (
     <StateLogin>
       <BrowserRouter>
         <Navigation />
+
+        {user ? (
+          <button onClick={logout}>Logout</button>
+        ) : (
+          <button onClick={login}>Login</button>
+        )}
         <Routes>
           <Route index element={<Landing />} />
           <Route path="/landing" element={<Landing />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/admin" element={<Admin />} />
+
+          {/* Proteger multiples rutas */}
+          <Route element={<ProtectedRoute isAllowed={!!user} />}>
+            <Route path="/home" element={<Home />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+          </Route>
+
+          {/* Solo proteger una ruta */}
+          <Route
+            path="/analytics"
+            element={
+              <ProtectedRoute
+                isAllowed={!!user && user.permissions.includes("analize")}
+                redirectTo="/home"
+              >
+                <Analytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute
+                isAllowed={!!user && user.role.includes("admin")}
+                redirectTo="/home"
+              >
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </StateLogin>
